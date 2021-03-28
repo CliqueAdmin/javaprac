@@ -1,0 +1,118 @@
+plugins {
+    // Apply the java plugin to add support for Java
+    id 'java'
+    id 'idea'
+
+    // Apply the application plugin to add support for building an application
+    id 'application'
+
+    id 'jacoco'
+
+//    id 'checkstyle'
+    id "io.freefair.lombok" version "4.1.5"
+//    id "com.github.spotbugs" version "2.0.1"
+    id "org.sonarqube" version "2.8"
+}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+repositories {
+    mavenCentral()
+}
+dependencies {
+    implementation 'junit:junit:4.13'
+    implementation "org.mockito:mockito-core:2.+"
+}
+
+
+jacoco {
+    toolVersion = "0.8.5"
+    reportsDir = file("$buildDir/customJacocoReportDir")
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+
+        // HTML reports can be used to see code coverage
+        // without any external tools
+        html.enabled true
+//        html.destination file("${buildDir}/jacocoHtml")
+    }
+}
+//checkstyle {
+//    toolVersion '7.8.1'
+//    configFile  rootProject.file('config/checkstyle/checkstyle.xml')
+//
+//}
+//spotbugs {
+//    toolVersion = '3.1.12'
+//}
+
+//tasks.withType(com.github.spotbugs.SpotBugsTask) {
+//    reports.xml.enabled = false
+//    reports.html.enabled = true
+//    includeFilter = file("spotbugs-exclude.xml")
+//}
+sourceSets {
+    src {
+        main {
+            java {
+                srcDirs = ['src']
+                exclude 'amz/interviews/obsolete/**'
+            }
+        }
+        test {
+            java {
+                srcDirs = ['tst']
+            }
+        }
+    }
+}
+
+// A resolvable configuration to collect source code
+def sourcesPath = configurations.create("sourcesPath") {
+    visible = false
+    canBeResolved = true
+    canBeConsumed = false
+    extendsFrom(configurations.implementation)
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.DOCUMENTATION))
+        attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType, 'source-folders'))
+    }
+}
+
+// A resolvable configuration to collect JaCoCo coverage data
+def coverageDataPath = configurations.create("coverageDataPath") {
+    visible = false
+    canBeResolved = true
+    canBeConsumed = false
+    extendsFrom(configurations.implementation)
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.DOCUMENTATION))
+        attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named(DocsType, 'jacoco-coverage-data'))
+    }
+}
+
+// Task to gather code coverage from multiple subprojects
+def codeCoverageReport = tasks.register('codeCoverageReport', JacocoReport) {
+    additionalClassDirs(configurations.runtimeClasspath)
+    additionalSourceDirs(sourcesPath.incoming.artifactView { lenient(true) }.files)
+    executionData(coverageDataPath.incoming.artifactView { lenient(true) }.files.filter { it.exists() })
+
+    reports {
+        // xml is usually used to integrate code coverage with
+        // other tools like SonarQube, Coveralls or Codecov
+        xml.enabled true
+
+        // HTML reports can be used to see code coverage
+        // without any external tools
+        html.enabled true
+    }
+}
+
+// Make JaCoCo report generation part of the 'check' lifecycle phase
+tasks.named("check") {
+    dependsOn(codeCoverageReport)
+}
