@@ -1,8 +1,9 @@
-package practise;
+package practise.slidingwindow;
 
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import practise.slidingwindow.SlidingWindow;
 
 public class SlidingWindowTest {
 
