@@ -1,4 +1,4 @@
-package practise;
+package practise.slidingwindow;
 
 public class SlidingWindow {
 
@@ -22,21 +22,18 @@ public class SlidingWindow {
   }
 
   public int[] sumSlidingWindow(int[] arr, int groupSize) {
+    //todo:validations
     int[] results = new int[(arr.length - groupSize) + 1];
     int sum = 0;
     int index = 0;
     for (int i = 0; i < arr.length; i++) {
-      if (i < groupSize) {
-        sum = sum + arr[i];
-        if (i == groupSize - 1) {
-          results[index++] = sum;
-        }
-        continue;
+      if (i >= groupSize) {
+        results[i - groupSize] = sum;
+        sum = sum - arr[i - groupSize];
       }
-      sum = sum - arr[i - groupSize];
       sum = sum + arr[i];
-      results[index++] = sum;
     }
+    results[results.length - 1] = sum;
     return results;
   }
 
