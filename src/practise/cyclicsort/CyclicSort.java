@@ -1,4 +1,4 @@
-package cyclicsort;
+package practise.cyclicsort;
 
 import java.util.Arrays;
 
